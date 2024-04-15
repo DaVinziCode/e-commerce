@@ -37,3 +37,23 @@ php artisan migrate:refresh --seed
 
 ##Create factory user command##
 php artisan make:factory ProductFactory
+
+
+#clone project
+-composer install
+-cp .env.example .env
+-php artisan key:generate
+-php artisan migrate
+-php artisan db:seed
+-npm install
+-npm run dev
+
+#create image
+-composer require intervention/image
+-php artisan storage:link
+
+#Livewire
+-php artisan make:livewire Buttons/Featured
+
+
+

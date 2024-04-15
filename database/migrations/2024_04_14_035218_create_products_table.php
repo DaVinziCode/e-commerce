@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->integer('stock_left');
             $table->decimal('price');
             $table->text('description');
-            $table->string('product_image');
+            $table->string('product_image')->nullable();
             $table->boolean('is_publish')->default(false);
             $table->timestamps();
         });

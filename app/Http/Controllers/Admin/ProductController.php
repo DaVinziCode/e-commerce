@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Products;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Models\Product;
-
+use Intervention\Image\Facades\Image;
 class ProductController extends Controller
 {
     /**
@@ -42,7 +42,49 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        $data = $request->validate([
+            "product_name" => 'required',
+            "qty" => 'required',
+            "actual_stock" => 'required',
+            "stock_left" => 'required',
+            'price'=> 'required|decimal:2',
+            "description" => 'nullable',
+        ]);
+
+        if ($request->hasFile('product_image')) {
+            $request->validate([
+                'product_image'=> 'mimes:jpeg,png,bmp,tiff |max:4096',
+            ]);
+
+            $filenameWithExtension = $request->file('product_image');
+
+            $filename = pathinfo($filenameWithExtension, PATHINFO_FILENAME);
+
+            $extension = $request->file('product_image')->getClientOriginalExtension();
+
+            $filenameToStore = $filename .'_'.time().'.'.$extension;
+
+            $smallThumbnail = $filename .'_'.time().'.'.$extension;
+
+            $request->file('product_image')->storeAs('public/product', $filenameToStore);
+
+            $request->file('product_image')->storeAs('public/product/thumbnail', $smallThumbnail);
+
+            $thumbNail = 'storage/product/thumbnail/' . $smallThumbnail;
+
+            $this->createThumbnail($thumbNail, 150, 93);
+
+            $data['product_image'] = $filenameToStore;
+        }
+
+
+
+        Products::create($data);
+
+        // return redirect('/')->with('message', 'New Student was added successfully!');
+        return to_route('admin.products.index')->with('message', 'New Product was added successfully!');
+
     }
 
     /**
@@ -51,9 +93,9 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($id)
+    public function show(Products $product)
     {
-        //
+        return view('admin.products.show', ['product'=> $product]);
     }
 
     /**
@@ -62,9 +104,9 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Products $product)
     {
-        //
+        return view('admin.products.edit', ['product'=> $product]);
     }
 
     /**
@@ -74,9 +116,46 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Products $product)
     {
-        //
+         $data = $request->validate([
+            "product_name" => 'required',
+            "quantity" => 'required',
+            "actual_stock" => 'required',
+            "stock_left" => 'required',
+            'price'=> 'required|decimal:2',
+            "description" => 'nullable',
+        ]);
+
+        if ($request->hasFile('product_image')) {
+            $request->validate([
+                'product_image'=> 'mimes:jpeg,png,bmp,tiff |max:4096',
+            ]);
+
+            $filenameWithExtension = $request->file('product_image');
+
+            $filename = pathinfo($filenameWithExtension, PATHINFO_FILENAME);
+
+            $extension = $request->file('product_image')->getClientOriginalExtension();
+
+            $filenameToStore = $filename .'_'.time().'.'.$extension;
+
+            $smallThumbnail = $filename .'_'.time().'.'.$extension;
+
+            $request->file('product_image')->storeAs('public/product', $filenameToStore);
+
+            $request->file('product_image')->storeAs('public/product/thumbnail', $smallThumbnail);
+
+            $thumbNail = 'storage/product/thumbnail/' . $smallThumbnail;
+
+            $this->createThumbnail($thumbNail, 150, 93);
+
+            $data['product_image'] = $filenameToStore;
+        }
+
+        Products::create($data);
+
+        return redirect('/')->with('message', 'New Student was added successfully!');
     }
 
     /**
@@ -85,8 +164,17 @@ class ProductController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Products $product)
     {
-        //
+        $product->delete();
+        return redirect('/')->with('message', 'Data was successfully deleted!');
+    }
+
+    public function createThumbnail($path, $width, $height){
+        $img = Image::make($path)->resize($width, $height, function
+        ($constraint){
+            $constraint->aspectRatio();
+        });
+        $img->save($path);
     }
 }
